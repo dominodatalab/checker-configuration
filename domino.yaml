@@ -1,0 +1,41 @@
+sonobuoy-config:
+  driver: DaemonSet  # A 'Job' is sufficient for all checks but docker; however this simplifies the plugin
+  plugin-name: domino
+  result-format: junit
+  skip-cleanup: true
+
+spec:
+  env:
+  - name: DOCKER_API_VERSION
+    value: '1.38'
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: RESULTS_DIR
+    value: /tmp/results
+  image: quay.io/domino/k8s-validator:latest
+  imagePullPolicy: Always
+  name: domino
+  securityContext:
+    privileged: false
+  volumeMounts:
+  - mountPath: /tmp/results
+    name: results
+    readOnly: false
+  - mountPath: /var/run/docker.sock
+    name: docker-mnt
+    readOnly: false
+
+extra-volumes:
+- name: docker-mnt
+  hostPath:
+    path: /var/run/docker.sock
